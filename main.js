@@ -111,7 +111,7 @@ let prevInfo = '';
 let prevArgs = [];
 
 async function setActivity() {
-	if (!rpc || !win) return;
+	if (!rpc || !win || !config.state) return;
 
 	if (config.source.indexOf('soundcloud.com') != -1) return;
 
@@ -121,25 +121,12 @@ async function setActivity() {
 	}
 	
 	const args = win.getTitle().split(' - ');
-	let smallImage = 'play';
-	let details = args[0];
-	let state = args[1];
-
-	console.log(win.getTitle());
-	console.log(args);
+	let details = args.length < 2 ? prevArgs[0] : args[0];
+	let state = args.length < 2 ? prevArgs[1] : args[1];
 
 	if (prevInfo !== win.getTitle()) {
 		prevInfo = win.getTitle();
-
-		if (args.length > 1) {
-			prevArgs = args;
-		}
-	}
-
-	if (args.length < 2) {
-		smallImage = 'pause';
-		details = prevArgs[0];
-		state = prevArgs[1];
+		prevArgs = args.length > 1 ? args : prevArgs;
 	}
 
 	rpc.setActivity({
@@ -147,8 +134,8 @@ async function setActivity() {
 		state: state == 'YouTube Music' ? '¯\\_(ツ)_/¯' : state,
 		largeImageKey: 'youtube',
 		largeImageText: 'YouTube Music',
-		smallImageKey: smallImage,
-		smallImageText: smallImage == 'play' ? 'Слушает' : 'На паузе',
+		smallImageKey: args.length < 2 ? 'pause' : 'play',
+		smallImageText: args.length < 2 ? 'На паузе' : 'Слушает',
 	});
 }
 
@@ -170,7 +157,7 @@ rpc.on('ready', () => {
   console.log('Authed for user', rpc.user.username);
 
 	setActivity();
-	setInterval(() => {setActivity();}, 5e3);
+	setInterval(() => setActivity(), 5e3);
 });
 
 rpc.login({clientId: config.clientId}).catch(console.error);
