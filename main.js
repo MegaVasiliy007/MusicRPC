@@ -7,7 +7,6 @@ let fs = require('fs')
 const DiscordRPC = require('discord-rpc')
 		, rpc = new DiscordRPC.Client({transport: 'ipc'})
 		, {app, BrowserWindow, Menu, remote, globalShortcut } = require('electron')
-		, clientId = config.clientId
 		;
 
 DiscordRPC.register(config.clientId);
@@ -16,7 +15,9 @@ const menuTemplate = [
 	{
 		label: "Interface",
 		submenu: [
-			{role: "Reload"}
+			{role: "Reload"},
+			{role: "toggleDevTools"},
+			{label: 'Enable RPC', type: 'checkbox', checked: config.state ? true : false, click: () => {config.state = config.state ? false : true; saveConfig()}}
 		]
 	},
 	{label: "Source", submenu: []}
@@ -31,10 +32,9 @@ app.on('ready', () => {
 	win.setMinimumSize(300, 300);
 	win.setSize(800, 700);
 	win.setResizable(true);
-	// win.openDevTools();
-	const menu = Menu.buildFromTemplate(menuTemplate);
-	Menu.setApplicationMenu(menu);
+	Menu.setApplicationMenu(Menu.buildFromTemplate(menuTemplate));
 	win.once('ready-to-show', () => {win.show()});
+
 
   globalShortcut.register('MediaPlayPause', () => {
   	if (config.source.indexOf('music.yandex.ru') != -1) {
@@ -107,23 +107,23 @@ app.on('ready', () => {
 
 
 
-let startTimestamp = new Date();
 let prevInfo = '';
 let prevArgs = [];
 
-function setActivity() {
+async function setActivity() {
 	if (!rpc || !win) return;
 
+	if (config.source.indexOf('soundcloud.com') != -1) return;
+
 	if (config.source.indexOf('music.yandex.ru') != -1) {
-		// win.webContents.executeJavaScript('externalAPI.togglePause()');
+		yandex();
 		return;
 	}
 	
-	const args = config.source == 'youtube.com' ? win.getTitle().split(' - ') : win.getTitle().split(' — ');
+	const args = win.getTitle().split(' - ');
 	let smallImage = 'play';
 	let details = args[0];
 	let state = args[1];
-	let smallImageText = 'Слушает';
 
 	console.log(win.getTitle());
 	console.log(args);
@@ -138,31 +138,39 @@ function setActivity() {
 
 	if (args.length < 2) {
 		smallImage = 'pause';
-		smallImageText = 'На паузе';
 		details = prevArgs[0];
 		state = prevArgs[1];
 	}
 
 	rpc.setActivity({
 		details: details,
-		state: config.source == 'youtube.com' && state == 'YouTube Music' ? '¯\\_(ツ)_/¯' : state,
-		startTimestamp,
-		largeImageKey: config.source.split('.')[0],
-		largeImageText: config.source == 'youtube.com' ? 'YouTube Music' : 'Yandex Music',
+		state: state == 'YouTube Music' ? '¯\\_(ツ)_/¯' : state,
+		largeImageKey: 'youtube',
+		largeImageText: 'YouTube Music',
 		smallImageKey: smallImage,
-		smallImageText: smallImageText,
-		instance: false,
+		smallImageText: smallImage == 'play' ? 'Слушает' : 'На паузе',
 	});
+}
+
+async function yandex() {
+	let data = await win.webContents.executeJavaScript('externalAPI.getCurrentTrack()');
+	let state = await win.webContents.executeJavaScript('externalAPI.isPlaying()');
+
+	rpc.setActivity({
+		details: data.title,
+		state: data.artists[0].title,
+		largeImageKey: 'yandex',
+		largeImageText: 'Yandex Music',
+		smallImageKey: state ? 'play' : 'pause',
+		smallImageText: state ? 'Слушает' : 'На паузе'
+	})
 }
 
 rpc.on('ready', () => {
   console.log('Authed for user', rpc.user.username);
 
 	setActivity();
-	// activity can only be set every 15 seconds
-	setInterval(() => {
-		setActivity();
-	}, 15e3);
+	setInterval(() => {setActivity();}, 5e3);
 });
 
-rpc.login({clientId}).catch(console.error);
+rpc.login({clientId: config.clientId}).catch(console.error);
