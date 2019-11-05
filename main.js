@@ -41,6 +41,10 @@ app.on('ready', () => {
   		win.webContents.executeJavaScript('externalAPI.togglePause()');
   		return;
   	}
+  	if (config.source.indexOf('music.youtube.com') != -1) {
+  		win.webContents.sendInputEvent({type: 'keyDown', keyCode: 'Space'})
+  		return;
+  	}
     console.log('MediaPlayPause is pressed')
   });
   console.log('MediaPlayPause', globalShortcut.isRegistered('MediaPlayPause'));
@@ -50,6 +54,10 @@ app.on('ready', () => {
   		win.webContents.executeJavaScript('externalAPI.next()');
   		return;
   	}
+  	if (config.source.indexOf('music.youtube.com') != -1) {
+  		win.webContents.sendInputEvent({type: 'keyDown', keyCode: 'j'})
+  		return;
+  	}
     console.log('MediaNextTrack is pressed')
   });
   console.log('MediaNextTrack', globalShortcut.isRegistered('MediaNextTrack'));
@@ -57,6 +65,10 @@ app.on('ready', () => {
   globalShortcut.register('MediaPreviousTrack', () => {
   	if (config.source.indexOf('music.yandex.ru') != -1) {
   		win.webContents.executeJavaScript('externalAPI.prev()');
+  		return;
+  	}
+  	if (config.source.indexOf('music.youtube.com') != -1) {
+  		win.webContents.sendInputEvent({type: 'keyDown', keyCode: 'k'})
   		return;
   	}
     console.log('MediaPreviousTrack is pressed')
@@ -77,6 +89,10 @@ app.on('ready', () => {
   		win.webContents.executeJavaScript(`externalAPI.setVolume(${vol + 0.1})`);
   		return;
   	}
+  	if (config.source.indexOf('music.youtube.com') != -1) {
+  		win.webContents.sendInputEvent({type: 'keyDown', keyCode: '='})
+  		return;
+  	}
     console.log('VolumeUp is pressed')
   });
   console.log('VolumeUp', globalShortcut.isRegistered('VolumeUp'));
@@ -87,6 +103,10 @@ app.on('ready', () => {
   		win.webContents.executeJavaScript(`externalAPI.setVolume(${vol - 0.1})`);
   		return;
   	}
+  	if (config.source.indexOf('music.youtube.com') != -1) {
+  		win.webContents.sendInputEvent({type: 'keyDown', keyCode: '-'})
+  		return;
+  	}
     console.log('VolumeDown is pressed')
   });
   console.log('VolumeDown', globalShortcut.isRegistered('VolumeDown'));
@@ -94,6 +114,10 @@ app.on('ready', () => {
   globalShortcut.register('VolumeMute', () => {
   	if (config.source.indexOf('music.yandex.ru') != -1) {
   		win.webContents.executeJavaScript('externalAPI.toggleMute()');
+  		return;
+  	}
+  	if (config.source.indexOf('music.youtube.com') != -1) {
+  		win.webContents.sendInputEvent({type: 'keyDown', keyCode: 'm'})
   		return;
   	}
     console.log('VolumeMute is pressed')

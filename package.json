@@ -1,5 +1,5 @@
 {
-  "name": "Music RPC",
+  "name": "MusicRPC",
   "version": "1.0.0",
   "description": "YouTube и Yandex музыка с Discord RPC",
   "main": "start.js",
