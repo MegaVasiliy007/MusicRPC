@@ -1,5 +1,7 @@
 let fs = require('fs')
+	, request = require('request-promise-native')
 	, config = require('./config.json')
+	, googleData = {key: require('./google.js'), url: '', res: {}}
 	, saveConfig = () => {fs.writeFile('./config.json',  JSON.stringify(config), 'utf8', () => {})}
 	, win
 	;
@@ -24,7 +26,7 @@ const menuTemplate = [
 ];
 
 for (var i of config.menu) menuTemplate[1].submenu.push({label: i, type: "radio", click: checked, checked: config.source.indexOf(i) != -1 ? true : false});
-function checked(menuItem) {config.source = menuItem.label; saveConfig(); console.log(menuItem.label); win.loadURL(`https://${config.source}`);}
+function checked(menuItem) {config.source = menuItem.label; saveConfig(); if (googleData.url && config.source.indexOf('music.youtube.com') == -1) googleData.url = ''; console.log(menuItem.label); win.loadURL(`https://${config.source}`);}
 
 app.on('ready', () => {
 	// Create the browser window.
@@ -131,10 +133,7 @@ app.on('ready', () => {
 
 
 
-let prevInfo = '';
-let prevArgs = [];
-
-async function setActivity() {
+function setActivity() {
 	if (!rpc || !win || !config.state) return;
 
 	if (config.source.indexOf('soundcloud.com') != -1) return;
@@ -143,24 +142,44 @@ async function setActivity() {
 		yandex();
 		return;
 	}
-	
-	const args = win.getTitle().split(' - ');
-	let details = args.length < 2 ? prevArgs[0] : args[0];
-	let state = args.length < 2 ? prevArgs[1] : args[1];
 
-	if (prevInfo !== win.getTitle()) {
-		prevInfo = win.getTitle();
-		prevArgs = args.length > 1 ? args : prevArgs;
-	}
+  if (config.source.indexOf('music.youtube.com') != -1) {
+    google();
+    return;
+  }
+}
 
-	rpc.setActivity({
-		details: details,
-		state: state == 'YouTube Music' ? '¯\\_(ツ)_/¯' : state,
-		largeImageKey: 'youtube',
-		largeImageText: 'YouTube Music',
-		smallImageKey: args.length < 2 ? 'pause' : 'play',
-		smallImageText: args.length < 2 ? 'На паузе' : 'Слушает',
-	});
+async function google() {
+  if (!googleData.url && win.webContents.getURL() == 'https://music.youtube.com/') {
+    rpc.setActivity({
+      details: 'Ожидание...',
+      state: 'Ждем выбора трека',
+      largeImageKey: 'youtube',
+      largeImageText: 'YouTube Music',
+      smallImageKey: 'pause',
+      smallImageText: 'На паузе',
+    });
+    return;
+  }
+
+  let getUrl = win.webContents.getURL().slice(win.webContents.getURL().indexOf('v=')+2, win.webContents.getURL().indexOf('&list='));
+
+  if (getUrl != googleData.url && win.webContents.getURL() != 'https://music.youtube.com/') {
+    googleData.url = getUrl;
+    let res = await request.get({url: `https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${googleData.url}&key=${googleData.key}`, json: true});
+    console.log(res);
+    if (!res.pageInfo.totalResults) return;
+    googleData.res = res.items[0].snippet;
+  }
+
+  rpc.setActivity({
+    details: googleData.res.title,
+    state: googleData.res.channelTitle,
+    largeImageKey: 'youtube',
+    largeImageText: 'YouTube Music',
+    smallImageKey: win.getTitle() == 'YouTube Music' ? 'pause' : 'play',
+    smallImageText: win.getTitle() == 'YouTube Music' ? 'На паузе' : 'Слушает',
+  });
 }
 
 async function yandex() {
@@ -180,7 +199,12 @@ async function yandex() {
 rpc.on('ready', () => {
   console.log('Authed for user', rpc.user.username);
 
-	setActivity();
+	rpc.setActivity({
+    details: 'Запускается...',
+    state: 'Загрузка плеера',
+    smallImageKey: 'pause',
+    smallImageText: 'На паузе'
+  })
 	setInterval(() => setActivity(), 5e3);
 });
 
