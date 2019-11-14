@@ -42,7 +42,7 @@ app.on('ready', () => {
   		return;
   	}
   	if (config.source.indexOf('music.youtube.com') != -1) {
-  		win.webContents.sendInputEvent({type: 'keyDown', keyCode: 'Space'})
+      win.webContents.executeJavaScript(`if(player.getElementsByTagName('video')[0].paused) player.playVideo(); else player.pauseVideo();`);
   		return;
   	}
     console.log('MediaPlayPause is pressed')
@@ -121,7 +121,7 @@ app.on('ready', () => {
   		return;
   	}
   	if (config.source.indexOf('music.youtube.com') != -1) {
-  		win.webContents.sendInputEvent({type: 'keyDown', keyCode: 'm'})
+  		win.webContents.executeJavaScript('if(player.isMuted()) player.unMute(); else player.mute();');
   		return;
   	}
     console.log('VolumeMute is pressed')
