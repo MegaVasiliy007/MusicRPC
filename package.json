@@ -1,16 +1,17 @@
 {
   "name": "MusicRPC",
-  "version": "2.0.0",
+  "version": "2.5.0",
   "description": "YouTube и Yandex музыка с Discord RPC",
-  "main": "start.js",
+  "main": "main.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "electron .",
     "pack": "electron-builder --dir",
-    "dist": "electron-builder"
+    "build": "electron-builder"
   },
   "keywords": [
     "youtube",
+    "yandex",
     "music",
     "client",
     "discord",
@@ -20,18 +21,18 @@
   ],
   "author": "MegaVasiliy007",
   "license": "MIT",
+  "repository": "github:MegaVasiliy007/MusicRPC",
   "devDependencies": {
-    "babel-polyfill": "^6.0.16",
-    "babel-preset-env": "^1.7.0",
-    "babel-register": "^6.26.0",
-    "electron-packager": "^13.1.1"
+    "electron": "^3.1.13",
+    "electron-builder": "^20.44.4"
   },
   "dependencies": {
-    "asar": "^0.14.6",
-    "discord-rpc": "^3.1.0",
-    "electron": "^3.1.13",
-    "electron-builder": "^20.44.4",
-    "request": "^2.88.0",
-    "request-promise-native": "^1.0.8"
+    "discord-rpc": "^3.1.0"
+  },
+  "build": {
+    "appId": "MusicRPC",
+    "mac": {
+      "category": "ru.megavasiliy007.musicrpc"
+    }
   }
 }
